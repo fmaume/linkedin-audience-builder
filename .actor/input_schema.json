@@ -28,6 +28,7 @@
         },
         "maxDepth": {
             "title": "Contact scraper: max depth",
+            "sectionCaption": "Cost optimisation",
             "type": "integer",
             "description": "How many link levels deep the contact-info scraper follows on each domain while hunting for the LinkedIn company URL. 0 = homepage only.",
             "default": 1,
