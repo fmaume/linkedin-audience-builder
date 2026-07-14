@@ -1,0 +1,38 @@
+{
+    "actorSpecification": 1,
+    "fields": {},
+    "views": {
+        "overview": {
+            "title": "LinkedIn audience rows",
+            "transformation": {
+                "fields": [
+                    "companyname",
+                    "companywebsite",
+                    "companyemaildomain",
+                    "linkedincompanypageurl",
+                    "stocksymbol",
+                    "industry",
+                    "city",
+                    "state",
+                    "companycountry",
+                    "zipcode"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "companyname": { "label": "companyname", "format": "text" },
+                    "companywebsite": { "label": "companywebsite", "format": "link" },
+                    "companyemaildomain": { "label": "companyemaildomain", "format": "text" },
+                    "linkedincompanypageurl": { "label": "linkedincompanypageurl", "format": "link" },
+                    "stocksymbol": { "label": "stocksymbol", "format": "text" },
+                    "industry": { "label": "industry", "format": "text" },
+                    "city": { "label": "city", "format": "text" },
+                    "state": { "label": "state", "format": "text" },
+                    "companycountry": { "label": "companycountry", "format": "text" },
+                    "zipcode": { "label": "zipcode", "format": "text" }
+                }
+            }
+        }
+    }
+}

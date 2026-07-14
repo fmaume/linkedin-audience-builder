@@ -1,0 +1,20 @@
+{
+    "$schema": "https://apify.com/schemas/v1/actor.ide.json",
+    "actorSpecification": 1,
+    "name": "linkedin-audience-builder",
+    "title": "LinkedIn Audience Builder",
+    "description": "Turns a list of website domains into a LinkedIn Campaign Manager audience CSV by resolving each domain to its LinkedIn company page and enriching with industries and locations.",
+    "version": "0.0",
+    "buildTag": "latest",
+    "defaultMemoryMbytes": 1024,
+    "meta": {
+        "templateId": "ts-empty",
+        "generatedBy": "Claude Code with Claude Opus 4.7"
+    },
+    "input": "./input_schema.json",
+    "output": "./output_schema.json",
+    "storages": {
+        "dataset": "./dataset_schema.json"
+    },
+    "dockerfile": "../Dockerfile"
+}

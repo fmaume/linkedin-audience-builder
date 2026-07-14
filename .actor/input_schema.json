@@ -1,0 +1,32 @@
+{
+    "title": "LinkedIn Audience Builder Input",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "domains": {
+            "title": "Website domains",
+            "type": "array",
+            "description": "Website domains to enrich into a LinkedIn audience. Bare domains (\"apify.com\") and full URLs are both accepted.",
+            "editor": "stringList",
+            "prefill": ["apify.com", "linkedin.com"],
+            "uniqueItems": true
+        },
+        "maxDepth": {
+            "title": "Contact scraper: max depth",
+            "type": "integer",
+            "description": "How many link levels deep the contact-info scraper follows on each domain while hunting for the LinkedIn company URL. 0 = homepage only.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 5
+        },
+        "maxRequestsPerStartUrl": {
+            "title": "Contact scraper: max pages per domain",
+            "type": "integer",
+            "description": "Maximum number of pages the contact-info scraper visits per input domain. Keeps cost bounded per domain.",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50
+        }
+    },
+    "required": ["domains"]
+}

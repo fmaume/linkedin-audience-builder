@@ -1,0 +1,16 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "LinkedIn Audience Builder output",
+    "properties": {
+        "dataset": {
+            "type": "string",
+            "title": "Audience rows (LinkedIn CSV shape)",
+            "template": "{{links.apiDefaultDatasetUrl}}/items"
+        },
+        "subDatasets": {
+            "type": "string",
+            "title": "Sub-Actor datasets",
+            "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/SUB_DATASETS"
+        }
+    }
+}

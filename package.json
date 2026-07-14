@@ -1,0 +1,40 @@
+{
+    "name": "linkedin-audience-builder",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "Apify orchestrator Actor that turns a list of website domains into a LinkedIn Campaign Manager audience CSV.",
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "dependencies": {
+        "apify": "^3.7.0",
+        "apify-client": "^2.10.0",
+        "apify-orchestrator": "0.8.1"
+    },
+    "devDependencies": {
+        "@apify/eslint-config": "^2.0.0",
+        "@apify/tsconfig": "^0.1.1",
+        "@types/node": "^24.0.0",
+        "eslint": "^9.29.0",
+        "eslint-config-prettier": "^10.1.5",
+        "globals": "^17.0.0",
+        "prettier": "^3.5.3",
+        "tsx": "^4.20.3",
+        "typescript": "~5.7.0",
+        "typescript-eslint": "^8.58.0",
+        "vitest": "^4.1.0"
+    },
+    "scripts": {
+        "start": "npm run start:dev",
+        "start:prod": "node dist/main.js",
+        "start:dev": "tsx src/main.ts",
+        "build": "tsc",
+        "lint": "eslint",
+        "lint:fix": "eslint --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "test": "vitest run"
+    },
+    "author": "Apify",
+    "license": "ISC"
+}
