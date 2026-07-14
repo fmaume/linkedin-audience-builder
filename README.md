@@ -1,24 +1,23 @@
-# LinkedIn Audience Builder
+# LinkedIn Company Audience Builder
 
-An Apify orchestrator Actor that turns a list of **website domains** into an upload-ready **LinkedIn Campaign Manager audience CSV**.
+This Actor turns a list of **website domains** into a company list ready to upload in **LinkedIn Campaign Manager audience manager**.
 
 ## What does LinkedIn Audience Builder do?
 
-Give it a list of company domains (`apify.com`, `linkedin.com`, `netflix.com`, …). It resolves each domain to the company's LinkedIn page, pulls the company's industries and locations from LinkedIn, and emits one row per **(company × industry × location)** combination. The dataset uses the exact field names that LinkedIn Campaign Manager expects, so the CSV export from the Apify Console can be uploaded to a **Company List audience** with no post-processing.
+Give it a list of company domains (`apify.com`, `linkedin.com`, `netflix.com`, …). It resolves each domain to the company's LinkedIn page, pulls the company's industries and locations from LinkedIn, and emits one row per **(company × industry × location)** combination. The dataset uses the exact field names that LinkedIn Campaign Manager expects, so the CSV export from the Apify Console can be uploaded as a **Company List audience** with no post-processing.
 
-Under the hood the Actor chains two Apify Store scrapers:
+Under the hood, the Actor chains two Apify Store scrapers:
 
 1. [`vdrmota/contact-info-scraper`](https://apify.com/vdrmota/contact-info-scraper) — crawls each domain and extracts the LinkedIn company URL from the site.
 2. [`harvestapi/linkedin-company`](https://apify.com/harvestapi/linkedin-company) — enriches each LinkedIn page with company name, website, industries, and locations.
 
-Running on the Apify platform means you get API access, scheduling, integrations, proxy rotation, and monitoring for free.
 
 ## Why use LinkedIn Audience Builder?
 
 - **Skip manual CSV construction.** LinkedIn's audience template demands very specific column names — this Actor produces them for you.
 - **Cover every industry × location.** LinkedIn's ad targeting matches against the audience row-by-row, so expanding one company into multiple rows widens the match surface.
-- **Cost-capped by design.** Pass a `Max total charge` when starting the Run and the Actor divides the budget evenly across its two paid sub-Actors.
-
+- **Enrich data at scale.** This Actor does the heavy lifting for you. So you can quickly build audience lists for your ABM campaign.
+  
 ## How to build a LinkedIn Company List audience
 
 1. Open the Actor's **Input** tab.
