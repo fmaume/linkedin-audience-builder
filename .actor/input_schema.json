@@ -6,10 +6,25 @@
         "domains": {
             "title": "Website domains",
             "type": "array",
-            "description": "Website domains to enrich into a LinkedIn audience. Bare domains (\"apify.com\") and full URLs are both accepted.",
+            "description": "Website domains to enrich into a LinkedIn audience. Bare domains (\"apify.com\") and full URLs are both accepted. Merged with any domains read from the Google Sheet.",
             "editor": "stringList",
             "prefill": ["apify.com", "linkedin.com"],
             "uniqueItems": true
+        },
+        "googleSheetUrl": {
+            "title": "Google Sheet URL (optional)",
+            "type": "string",
+            "description": "URL of a PUBLIC Google Sheet whose rows contain company domains. Use File → Share → Publish to web → Link (CSV) or set link sharing to \"Anyone with the link\". Leave empty to only use the Website domains field.",
+            "editor": "textfield",
+            "nullable": true
+        },
+        "googleSheetColumnName": {
+            "title": "Google Sheet column name",
+            "type": "string",
+            "description": "Header of the column in the sheet that contains the website domains. Required when a Google Sheet URL is provided.",
+            "editor": "textfield",
+            "default": "domain",
+            "nullable": true
         },
         "maxDepth": {
             "title": "Contact scraper: max depth",
@@ -28,5 +43,5 @@
             "maximum": 50
         }
     },
-    "required": ["domains"]
+    "required": []
 }

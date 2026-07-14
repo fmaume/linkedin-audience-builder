@@ -5,9 +5,15 @@ const STEPS = ['contactInfo', 'linkedinCompany'] as const;
 type Step = (typeof STEPS)[number];
 
 interface OrchestratorInput {
-    domains: string[];
+    domains?: string[];
+    googleSheetUrl?: string;
+    googleSheetColumnName?: string;
     maxDepth?: number;
     maxRequestsPerStartUrl?: number;
+}
+
+interface GoogleSheetScraperInput {
+    googleSheetUrl: string;
 }
 
 interface ContactInfoScraperInput {
@@ -109,14 +115,19 @@ function fmtUsd(v: number): string {
 await Actor.init();
 
 const input = await Actor.getInput<OrchestratorInput>();
-if (!input || !Array.isArray(input.domains) || input.domains.length === 0) {
-    throw new Error('Missing required input: "domains" must be a non-empty array of website domains.');
+if (!input) throw new Error('Missing input.');
+
+const inputDomains = Array.isArray(input.domains) ? input.domains : [];
+const googleSheetUrl = input.googleSheetUrl?.trim() ?? '';
+const googleSheetColumnName = input.googleSheetColumnName?.trim() ?? '';
+
+if (inputDomains.length === 0 && !googleSheetUrl) {
+    throw new Error('Provide at least one of "domains" or "googleSheetUrl".');
+}
+if (googleSheetUrl && !googleSheetColumnName) {
+    throw new Error('"googleSheetColumnName" is required when "googleSheetUrl" is set.');
 }
 
-const cleanDomains = [...new Set(input.domains.map((d) => d.trim()).filter(Boolean))];
-if (cleanDomains.length === 0) {
-    throw new Error('Input "domains" is empty after trimming.');
-}
 const maxDepth = input.maxDepth ?? 1;
 const maxRequestsPerStartUrl = input.maxRequestsPerStartUrl ?? 5;
 
@@ -169,8 +180,45 @@ function recordSpend(step: string, cost: number): void {
 }
 
 log.info(
-    `Cost cap for this run: ${fmtUsd(maxCostUsd)} (from Run options). Per-step cap (even split across ${STEPS.length} steps): ${fmtUsd(perStepCap)}.`,
+    `Cost cap for this run: ${fmtUsd(maxCostUsd)} (from Run options). Per-step cap (even split across ${STEPS.length} paid steps): ${fmtUsd(perStepCap)}.`,
 );
+
+// ---------- Optional pre-step: pull domains from a public Google Sheet ----------
+// https://apify.com/advantageous_subcontra/public-google-sheet-scraper
+// Compute-priced Actor, so no maxTotalChargeUsd cap is passed.
+let sheetRunDatasetId: string | null = null;
+const sheetDomains: string[] = [];
+if (googleSheetUrl) {
+    log.info(`Pre-step: reading domains from Google Sheet column "${googleSheetColumnName}" @ ${googleSheetUrl}`);
+    const sheetInput: GoogleSheetScraperInput = { googleSheetUrl };
+    const sheetRun = await client
+        .actor('advantageous_subcontra/public-google-sheet-scraper')
+        .call('google-sheet', sheetInput);
+    sheetRunDatasetId = sheetRun.defaultDatasetId;
+    log.info(`google-sheet-scraper finished: ${sheetRun.id} (status: ${sheetRun.status})`);
+
+    let sawColumn = false;
+    for await (const row of client.dataset(sheetRun.defaultDatasetId).iterate({ pageSize: 500 })) {
+        const record = row as Record<string, unknown>;
+        if (googleSheetColumnName in record) sawColumn = true;
+        const value = record[googleSheetColumnName];
+        if (typeof value === 'string' && value.trim()) {
+            sheetDomains.push(value.trim());
+        }
+    }
+    if (!sawColumn) {
+        throw new Error(
+            `Column "${googleSheetColumnName}" was not found in the Google Sheet. Verify the exact header name (case-sensitive).`,
+        );
+    }
+    log.info(`Google Sheet contributed ${sheetDomains.length} domain(s).`);
+}
+
+const cleanDomains = [...new Set([...inputDomains, ...sheetDomains].map((d) => d.trim()).filter(Boolean))];
+if (cleanDomains.length === 0) {
+    throw new Error('No domains to process after combining "domains" input and the Google Sheet.');
+}
+log.info(`Combined domain list: ${cleanDomains.length} unique entry/entries.`);
 
 // ---------- Step 1: vdrmota/contact-info-scraper ----------
 // https://apify.com/vdrmota/contact-info-scraper
@@ -224,12 +272,18 @@ for (const originalDomain of cleanDomains) {
 const linkedInUrls = [...new Set(linkedinByDomain.values())];
 if (linkedInUrls.length === 0) {
     log.warning('No LinkedIn company URLs were resolved from any input domain. Nothing to enrich.');
-    await Actor.setValue('SUB_DATASETS', [
-        {
-            name: 'vdrmota/contact-info-scraper',
-            resultUrl: `https://console.apify.com/storage/datasets/${contactRun.defaultDatasetId}`,
-        },
-    ]);
+    const partialSubDatasets: { name: string; resultUrl: string }[] = [];
+    if (sheetRunDatasetId) {
+        partialSubDatasets.push({
+            name: 'advantageous_subcontra/public-google-sheet-scraper',
+            resultUrl: `https://console.apify.com/storage/datasets/${sheetRunDatasetId}`,
+        });
+    }
+    partialSubDatasets.push({
+        name: 'vdrmota/contact-info-scraper',
+        resultUrl: `https://console.apify.com/storage/datasets/${contactRun.defaultDatasetId}`,
+    });
+    await Actor.setValue('SUB_DATASETS', partialSubDatasets);
     await Actor.exit();
 }
 
@@ -284,7 +338,14 @@ for await (const item of client.dataset(linkedInRun.defaultDatasetId).iterate({ 
 }
 log.info(`Emitted ${rowsEmitted} audience row(s) across ${companiesEmitted} enriched compan(y|ies).`);
 
-await Actor.setValue('SUB_DATASETS', [
+const subDatasets: { name: string; resultUrl: string }[] = [];
+if (sheetRunDatasetId) {
+    subDatasets.push({
+        name: 'advantageous_subcontra/public-google-sheet-scraper',
+        resultUrl: `https://console.apify.com/storage/datasets/${sheetRunDatasetId}`,
+    });
+}
+subDatasets.push(
     {
         name: 'vdrmota/contact-info-scraper',
         resultUrl: `https://console.apify.com/storage/datasets/${contactRun.defaultDatasetId}`,
@@ -293,7 +354,8 @@ await Actor.setValue('SUB_DATASETS', [
         name: 'harvestapi/linkedin-company',
         resultUrl: `https://console.apify.com/storage/datasets/${linkedInRun.defaultDatasetId}`,
     },
-]);
+);
+await Actor.setValue('SUB_DATASETS', subDatasets);
 
 log.info(`Done. Total tracked child-Run cost: ${fmtUsd(spent)}.`);
 await Actor.exit();

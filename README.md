@@ -4,12 +4,13 @@ This Actor turns a list of **website domains** into a company list ready to uplo
 
 ## What does LinkedIn Audience Builder do?
 
-Give it a list of company domains (`apify.com`, `linkedin.com`, `netflix.com`, …). It resolves each domain to the company's LinkedIn page, pulls the company's industries and locations from LinkedIn, and emits one row per **(company × industry × location)** combination. The dataset uses the exact field names that LinkedIn Campaign Manager expects, so the CSV export from the Apify Console can be uploaded as a **Company List audience** with no post-processing.
+Give it a list of company domains (`apify.com`, `linkedin.com`, `netflix.com`, …) — either pasted directly or read from a **public Google Sheet column**. It resolves each domain to the company's LinkedIn page, pulls the company's industries and locations from LinkedIn, and emits one row per **(company × industry × location)** combination. The dataset uses the exact field names that LinkedIn Campaign Manager expects, so the CSV export from the Apify Console can be uploaded as a **Company List audience** with no post-processing.
 
-Under the hood, the Actor chains two Apify Store scrapers:
+Under the hood, the Actor chains up to three Apify Store scrapers:
 
-1. [`vdrmota/contact-info-scraper`](https://apify.com/vdrmota/contact-info-scraper) — crawls each domain and extracts the LinkedIn company URL from the site.
-2. [`harvestapi/linkedin-company`](https://apify.com/harvestapi/linkedin-company) — enriches each LinkedIn page with company name, website, industries, and locations.
+1. (optional) [`advantageous_subcontra/public-google-sheet-scraper`](https://apify.com/advantageous_subcontra/public-google-sheet-scraper) — reads domains from a Google Sheet column.
+2. [`vdrmota/contact-info-scraper`](https://apify.com/vdrmota/contact-info-scraper) — crawls each domain and extracts the LinkedIn company URL from the site.
+3. [`harvestapi/linkedin-company`](https://apify.com/harvestapi/linkedin-company) — enriches each LinkedIn page with company name, website, industries, and locations.
 
 
 ## Why use LinkedIn Audience Builder?
@@ -21,9 +22,11 @@ Under the hood, the Actor chains two Apify Store scrapers:
 ## How to build a LinkedIn Company List audience
 
 1. Open the Actor's **Input** tab.
-2. Paste your list of domains into **Website domains** (bare domains like `apify.com` and full URLs both work).
+2. Provide domains in **either** of these ways (or both — they get merged and deduplicated):
+    - Paste them into **Website domains** (bare `apify.com` and full URLs both work).
+    - Set **Google Sheet URL** to a **public** sheet and **Google Sheet column name** to the header of the column that holds the domains.
 3. (Optional) In **Advanced**, set **Max total charge** in USD to cap spend.
-4. Click **Start**. Watch the two child Runs appear in your Apify Console.
+4. Click **Start**. The sub-Actor Runs appear in your Apify Console as the pipeline advances.
 5. When the Run finishes, open the **Storage → Dataset** tab and click **Download → CSV**.
 6. Upload the CSV into LinkedIn Campaign Manager → Plan → Audiences → Create → Upload a list → Company list.
 
@@ -31,9 +34,13 @@ Under the hood, the Actor chains two Apify Store scrapers:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `domains` | `array<string>` | *required* | Website domains to enrich. `["apify.com", "linkedin.com"]`. |
+| `domains` | `array<string>` | *empty* | Website domains to enrich. `["apify.com", "linkedin.com"]`. Required if no Google Sheet URL is provided. |
+| `googleSheetUrl` | string | *empty* | URL of a **public** Google Sheet. Rows are read via [`advantageous_subcontra/public-google-sheet-scraper`](https://apify.com/advantageous_subcontra/public-google-sheet-scraper). |
+| `googleSheetColumnName` | string | `domain` | Header of the column in the sheet that holds the domains. Required when a sheet URL is given. |
 | `maxDepth` | integer | `1` | How deep the contact-info scraper crawls on each domain hunting for the LinkedIn footer link. |
 | `maxRequestsPerStartUrl` | integer | `5` | Cap on pages the contact-info scraper visits per input domain. |
+
+You must provide at least one of `domains` or `googleSheetUrl`. When both are set, the two lists are merged and deduplicated before enrichment.
 
 The cost cap is **not** an input field — set it when triggering the Run (Apify Console → Advanced → **Max total charge**, or `maxTotalChargeUsd` via the API/SDK).
 
